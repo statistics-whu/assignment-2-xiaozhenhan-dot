@@ -1,0 +1,591 @@
+
+---
+title: "Untitled"
+author: "肖振翰"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+  html_document:
+    toc: true
+    number_sections: true
+    df_print: tibble
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse) # data manipulation
+library(kableExtra) # nice table
+library(broom)
+library(modelr)
+library(stats)
+library(lubridate)
+library(kableExtra)
+library(scales)
+```
+
+
+**MEM第二次作业**
+
+注：
+
+- **回答使用中英文皆可**
+
+- **推荐使用Rmd或者其他支持markdown的书写工具（如免费工具MarkText，收费Typora)答题。**
+
+- **请在github里提交你的作业**
+- **提交期限是12月2日**
+
+___
+
+```{r}
+library(tidyverse)
+```
+
+
+**Question #1:** BigBangTheory. (Attached Data: BigBangTheory)
+
+*The Big Bang Theory*, a situation comedy featuring Johnny Galecki, Jim Parsons, and Kaley Cuoco-Sweeting, is one of the most-watched programs on network television. The first two episodes for the 2011–2012 season premiered on September 22, 2011; the first episode attracted 14.1 million viewers and the second episode attracted 14.7 million viewers. The attached data file BigBangTheory shows the number of viewers in millions for the first 21 episodes of the 2011–2012 season (*the Big Bang theory* website, April 17, 2012).
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# 载入数据和预处理
+
+q1 <- read_csv("data/BigBangTheory.csv") %>% 
+  rename(air_date = `Air Date`, viewers = `Viewers (millions)`) %>% 
+  mutate(air_date = mdy(air_date))
+q1
+```
+
+a. Compute the minimum and the maximum number of viewers.
+```{r}
+min(q1$viewers)
+max(q1$viewers)
+```
+
+b. Compute the mean, median, and mode.
+```{r}
+mean(q1$viewers)
+median(q1$viewers)
+mode(q1$viewers)
+```
+
+c. Compute the first and third quartiles.
+```{r}
+first(q1$viewers)
+quantile(q1$viewers)
+```
+
+
+d. has viewership grown or declined over the 2011–2012 season? Discuss.
+```{r}
+# 绘制观众人数的趋势图
+ggplot(q1, aes(x = air_date, y = viewers)) +
+  geom_line() +
+  labs(x = "air_line", y = "Viewers ", title = "Viewership Trend")
+```
+
+
+**Question #2:** NBAPlayerPts. (Attached Data: NBAPlayerPts)
+```{r}
+nba_data <- read_csv("data/NBAPlayerPts.csv")
+head(nba_data)
+```
+
+CbSSports.com developed the Total Player Rating system to rate players in the National Basketball Association (NBA) based on various offensive and defensive statistics. The attached data file NBAPlayerPts shows the average number of points scored per game (PPG) for 50 players with the highest ratings for a portion of the 2012–2013 NBA season (CbSSports.com website, February 25, 2013). Use classes starting at 10 and ending at 30 in increments of 2 for PPG in the following.
+
+a. Show the frequency distribution.
+```{r}
+# Assuming nba_data is your data frame and PPG is the column of interest
+freq_table <- table(nba_data$PPG)
+
+# Print the frequency table
+print(freq_table)
+# Create a histogram of the PPG values
+hist(nba_data$PPG, breaks = 30, main = "Frequency Distribution of Points per Game", xlab = "Points per Game", col = "blue")
+# Load the ggplot2 package
+library(ggplot2)
+
+# Create a histogram using ggplot2
+ggplot(nba_data, aes(x = PPG)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(title = "Frequency Distribution of Points per Game", x = "Points per Game", y = "Frequency")
+```
+
+
+b. Show the relative frequency distribution.
+```{r}
+# Assuming nba_data is your data frame and PPG is the column of interest
+freq_table <- table(nba_data$PPG)
+
+# Print the frequency distribution table
+print(freq_table)
+# Calculate the total number of observations
+total_obs <- sum(freq_table)
+
+# Calculate the relative frequency distribution
+rel_freq_table <- freq_table / total_obs
+
+# Print the relative frequency distribution
+print(rel_freq_table)
+# Create a bar plot of the relative frequency distribution
+barplot(rel_freq_table, main = "Relative Frequency Distribution of Points per Game", xlab = "Points per Game", ylab = "Relative Frequency")
+# Load the ggplot2 package
+library(ggplot2)
+
+# Create a data frame for the relative frequency distribution
+rel_freq_df <- data.frame(PPG = names(rel_freq_table), Rel_Freq = as.numeric(rel_freq_table))
+
+# Create a bar plot using ggplot2
+ggplot(rel_freq_df, aes(x = PPG, y = Rel_Freq)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Relative Frequency Distribution of Points per Game", x = "Points per Game", y = "Relative Frequency")
+```
+
+
+c. Show the cumulative percent frequency distribution.
+```{r}
+# Assuming nba_data is your data frame and PPG is the column of interest
+freq_table <- table(nba_data$PPG)
+
+# Calculate relative frequencies
+rel_freq_table <- freq_table / sum(freq_table)
+
+# Calculate cumulative relative frequencies
+cumulative_rel_freq <- cumsum(rel_freq_table)
+
+# Convert to cumulative percent frequencies
+cumulative_percent_freq <- cumulative_rel_freq * 100
+
+# Print the cumulative percent frequency distribution
+print(cumulative_percent_freq)
+```
+
+d. Develop a histogram for the average number of points scored per game.
+```{r}
+nba_data <- read_csv("data/NBAPlayerPts.csv")
+head(nba_data)
+
+ggplot(nba_data, aes(x = PPG)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(title = "Histogram of Average Points Scored Per Game", 
+       x = "Points per Game (PPG)", 
+       y = "Frequency") +
+  theme_minimal()
+
+# Adding a density plot to the histogram
+ggplot(nba_data, aes(x = PPG)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "blue", alpha = 0.7) +
+  geom_density(color = "red", size = 1) +
+  labs(title = "Histogram with Density Plot of Average Points Scored Per Game", 
+       x = "Points per Game (PPG)", 
+       y = "Density") +
+  theme_minimal()
+```
+
+e. Do the data appear to be skewed? Explain.
+```{r}
+# Assuming nba_data is your data frame and PPG is the column of interest
+ggplot(nba_data, aes(x = PPG)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(title = "Histogram of Average Points Scored Per Game", 
+       x = "Points per Game (PPG)", 
+       y = "Frequency") +
+  theme_minimal()
+
+qqnorm(nba_data$PPG)
+qqline(nba_data$PPG, col = "red")
+
+# Load the e1071 package
+library(e1071)
+
+# Calculate skewness
+skewness_value <- skewness(nba_data$PPG)
+
+# Print skewness value
+print(skewness_value)
+```
+
+
+f. What percentage of the players averaged at least 20 points per game?
+```{r}
+over_20 <- nba_data %>% 
+  filter(PPG > 20)
+paste0(round((count(over_20) / count(nba_data)) * 100), "%")
+```
+
+
+**Question #3:** A researcher reports survey results by stating that the standard error of the mean is 20. The population standard deviation is 500.
+
+a. How large was the sample used in this survey?
+```{r}
+n <- (500 / 20) ^ 2 #SE=σ/(n^0.5)
+n
+```
+
+
+b. What is the probability that the point estimate was within ±25 of the population mean?
+```{r}
+Z <- 25 / 20 #Z=(X-μ)/SE
+paste0(round((pnorm(1.25) - pnorm(-1.25)) * 100), "%")
+```
+
+
+**Question #4:** Young Professional Magazine (Attached Data: Professional)
+
+*Young Professional* magazine was developed for a target audience of recent college graduates who are in their first 10 years in a business/professional career. In its two years of publication, the magazine has been fairly successful. Now the publisher is interested in expanding the magazine’s advertising base. Potential advertisers continually ask about the demographics and interests of subscribers to *young Professionals*. To collect this information, the magazine commissioned a survey to develop a profile of its subscribers. The survey results will be used to help the magazine choose articles of interest and provide advertisers with a profile of subscribers. As a new employee of the magazine, you have been asked to help analyze the survey results.
+
+Some of the survey questions follow:
+
+1. What is your age?
+
+
+2. Are you: Male_________ Female___________
+
+3. Do you plan to make any real estate purchases in the next two years?
+   
+   Yes______ No______
+
+4. What is the approximate total value of financial investments, exclusive of your
+   
+   home, owned by you or members of your household?
+
+5. How many stock/bond/mutual fund transactions have you made in the past year?
+
+6. Do you have broadband access to the Internet at home? Yes______ No______
+
+7. Please indicate your total household income last year. ___________
+
+8. Do you have children? Yes______ No______
+
+The file entitled Professional contains the responses to these questions. 
+
+**Managerial Report:**
+
+Prepare a managerial report summarizing the results of the survey. In addition to statistical summaries, discuss how the magazine might use these results to attract advertisers. You might also comment on how the survey results could be used by the magazine’s editors to identify topics that would be of interest to readers. Your report should address the following issues, but do not limit your analysis to just these areas.
+
+a. Develop appropriate descriptive statistics to summarize the data.
+```{r}
+path4 <- read_csv("data/Professional.csv")%>% 
+  rename(age = Age,
+         gender = Gender,
+    real_estate = `Real Estate Purchases?`,
+    investments = `Value of Investments ($)`,
+    num_trans = `Number of Transactions`,
+    has_broadband = `Broadband Access?`,
+    income = `Household Income ($)`,
+    have_children = `Have Children?`) %>% 
+  select(age:have_children) %>% 
+  mutate(across(is.character, as.factor))
+
+
+
+
+```
+
+
+b. Develop 95% confidence intervals for the mean age and household income of subscribers.
+```{r}
+t.test(path4$age)[[4]]
+t.test(path4$income)[[4]]
+```
+
+
+c. Develop 95% confidence intervals for the proportion of subscribers who have broadband access at home and the proportion of subscribers who have children.
+```{r}
+# Load the data (assuming it's in a CSV file)
+Quality <- read.csv("data/Quality.csv")
+# Calculate the sample proportions
+prop_broadband <- mean(Quality$Broadband)
+prop_children <- mean(Quality$Children)
+# Determine the sample size
+n <- nrow(Quality)
+# Calculate the standard error
+se_broadband <- sqrt(prop_broadband * (1 - prop_broadband) / n)
+se_children <- sqrt(prop_children * (1 - prop_children) / n)
+# Find the critical value for a 95% confidence interval
+z_star <- 1.96
+# Find the critical value for a 95% confidence interval
+me_broadband <- z_star * se_broadband
+me_children <- z_star * se_children
+# Construct the confidence interval
+ci_broadband <- c(prop_broadband - me_broadband, prop_broadband + me_broadband)
+ci_children <- c(prop_children - me_children, prop_children + me_children)
+# Print the confidence intervals
+cat("95% CI for broadband access:", ci_broadband, "\n")
+cat("95% CI for having children:", ci_children, "\n")
+```
+
+
+d. 是的，年轻专业人士应该是在线经纪商的一个很好的广告渠道。我们看到大多数订阅者除了自己的住房外，还有金融投资(平均金额为28.538美元)，其中一些人的投资金额相当大。(有几个人的投资超过10万美元)。
+
+e. 是的，调查结果允许我们估计订阅者的平均年龄为30.12岁，53.41%的订阅者有孩子。我们得出结论Young Professional的订阅者将是销售面向幼儿的教育软件和电脑游戏公司的良好目标市场。
+
+f.《青年专业人员》读者感兴趣的文章类型
+年轻的专业人士，通常处于职业生涯的早期到中期阶段，对能够支持其职业发展、财务健康和子女教育的各种话题有着浓厚的兴趣。 
+# Question #5: Quality Associate, Inc. (Attached Data: Quality)
+$$
+H_0: \mu = 12 \\
+H_1: \mu \neq 12
+$$
+
+Corrective action will be taken any time $H_0$ is rejected.
+
+Data are available in the data set Quality.
+
+**Managerial Report**
+```{r}
+path5 <- read_csv(str_c("data/Quality.csv")) %>% 
+  rename(s1 = `Sample 1`,
+         s2 = `Sample 2`,
+         s3 = `Sample 3`,
+         s4 = `Sample 4`)
+
+
+cal_p <- function(vec,miu,sigma,n){
+  a <- mean(vec) - miu
+  if(a >=0) {return(2*(1-pnorm(a/(sigma/sqrt(n)))))} 
+    else
+      return(2*pnorm(a/(sigma/sqrt(n))))
+}
+```
+
+a. the p_value is as follows:
+
+```{r}
+path5 %>% 
+  map_dbl(cal_p,miu = 12, sigma = 0.21, n = 30)
+```
+a. Also, you can use interval to test the hypothesis
+```{r}
+z_interval <- function(miu,sigma,prob,n) {return(c(miu + qnorm(prob) * sigma / sqrt(n), miu - qnorm(prob) * sigma / sqrt(n)))}
+z_interval(12,0.21,0.01,30)
+map(path5,mean)
+```
+
+
+b. compute the standard deviation for each of the four samples. does the assumption of .21 for the population standard deviation appear reasonable?
+```{r}
+map(path5,sd)
+```
+
+
+c. compute limits for the sample mean $\overline x$ around $\mu=12$ such that, as long as a new sample mean is within those limits, the process will be considered to be operating satisfactorily. if $\overline x$ exceeds the upper limit or if $\overline x$ is below the lower limit, corrective action will be taken. these limits are referred to as upper and lower control limits for quality control purposes.
+```{r}
+z_interval(12,0.21,0.01,30)
+```
+
+
+d. discuss the implications of changing the level of significance to a larger value. what mistake or error could increase if the level of significance is increased?
+```{r}
+z_interval(12,0.21,0.05,30)
+```
+
+
+**Question #6:** Vacation occupancy rates were expected to be up during March 2008 in Myrtle Beach, South Carolina (*the sun news,* February 29, 2008). Data in the file Occupancy (Attached file **Occupancy**) will allow you to replicate the findings presented in the newspaper. The data show units rented and not rented for a random sample of vacation properties during the first week of March 2007 and March 2008.
+
+a. Estimate the proportion of units rented during the first week of March 2007 and the first week of March 2008.
+```{r}
+#download data "quality" and clean up data
+path6 <- ("data/Occupancy.csv")
+occupany <- read.csv(path6)
+str(occupany)
+#setup first row as variant name
+colnames(occupany) <- as.character(unlist(occupany[1, ]))
+#delete previous first row
+occupany <- occupany[-1, ]
+#check data again
+str(occupany)
+head(occupany)
+#check the percentage of rented rooms in Mar 2007, na is not included, " " is not considered
+non_na_2007 <- na.omit(occupany$`March 2007`)
+yes_count_2007 <- sum(non_na_2007 == "Yes")
+no_count_2007 <- sum(non_na_2007 == "No")
+percentage_2007 <- paste0(round(yes_count_2007 / (yes_count_2007 + no_count_2007) * 100, 2), "%")
+percentage_2007
+#check the percentage of rented rooms in Mar 2008, na is not included, " " is not considered
+non_na_2008 <- na.omit(occupany$`March 2008`)
+yes_count_2008 <- sum(non_na_2008 == "Yes")
+no_count_2008 <- sum(non_na_2008 == "No")
+percentage_2008 <- paste0(round(yes_count_2008 / (yes_count_2008 + no_count_2008) * 100, 2), "%")
+percentage_2008
+```
+
+
+b. Provide a 95% confidence interval for the difference in proportions.
+```{r}
+#95% confidence intervals for the proportion in Mar 2007
+#remove values which are not "Yes" or "No"
+real_value_2007 <- occupany %>%
+  filter(`March 2007` %in% c("Yes", "No")) %>%
+  pull(`March 2007`)
+
+yes_count_2007 <- sum(real_value_2007 == "Yes")
+total_count_2007 <- length(real_value_2007)
+rented_2007_ci <- prop.test(yes_count_2007, total_count_2007, conf.level = 0.95)
+rented_2007_ci$conf.int 
+
+#95% confidence intervals for the proportion in Mar 2008
+#remove values which are not "Yes" or "No"
+real_value_2008 <- occupany %>%
+  filter(`March 2008` %in% c("Yes", "No")) %>%
+  pull(`March 2008`)
+
+yes_count_2008 <- sum(real_value_2007 == "Yes")
+total_count_2008 <- length(real_value_2008)
+rented_2008_ci <- prop.test(yes_count_2008, total_count_2008, conf.level = 0.95)
+rented_2008_ci$conf.int 
+```
+
+
+c. On the basis of your findings, does it appear March rental rates for 2008 will be up
+
+from those a year earlier?
+是的，会上涨。区间不包括零，应该拒绝等价假设。
+
+
+**Question #7**: **Air Force Training Program** (data file: Training)
+
+An air force introductory course in electronics uses a personalized system of instruction whereby each student views a videotaped lecture and then is given a programmed instruc-tion text. the students work independently with the text until they have completed the training and passed a test. Of concern is the varying pace at which the students complete this portion of their training program. Some students are able to cover the programmed instruction text relatively quickly, whereas other students work much longer with the text and require additional time to complete the course. The fast students wait until the slow students complete the introductory course before the entire group proceeds together with other aspects of their training.
+```{r}
+path7 <- read_csv(str_c("data/Training.csv")) 
+head(path7)
+
+```
+
+A proposed alternative system involves use of computer-assisted instruction. In this method, all students view the same videotaped lecture and then each is assigned to a computer terminal for further instruction. The computer guides the student, working independently, through the self-training portion of the course.
+
+To compare the proposed and current methods of instruction, an entering class of 122 students was assigned randomly to one of the two methods. one group of 61 students used the current programmed-text method and the other group of 61 students used the proposed computer-assisted method. The time in hours was recorded for each student in the study. Data are provided in the data set training (see Attached file).
+
+**Managerial Report**
+
+a. use appropriate descriptive statistics to summarize the training time data for each method. what similarities or differences do you observe from the sample data?
+```{r}
+skimr::skim(path7) %>% 
+  kable() %>% 
+  kable_styling()
+```
+
+
+b. Comment on any difference between the population means for the two methods. Discuss your findings.
+```{r}
+t.test(path7$Current,path7$Proposed)
+```
+
+
+c. compute the standard deviation and variance for each training method. conduct a hypothesis test about the equality of population variances for the two training methods. Discuss your findings.
+```{r}
+map(path7,sd)
+map(path7,var)
+var.test(path7$Current,path7$Proposed)
+```
+
+
+d. what conclusion can you reach about any differences between the two methods? what is your recommendation? explain.
+根据现有数据，建议采用拟议的方法。两种方法的平均完成时间非常接近，差异的95%置信区间为-1.55至0.83小时。在拟议的方法下，学生更有可能在大约相同的时间内完成培训，快速学生等待慢速学生完成培训的机会应该更少。
+
+e. can you suggest other data or testing that might be desirable before making a final decision on the training program to be used in the future?
+在最终决定之前，建议收集关于两种方法下学习量的数据。时间数据支持切换到提议的方法。在最后决定是否改用所提出的方法之前，对检查分数进行分析，以确定项目在提供学习量方面是否相似或不同。
+
+
+**Question #8**: The Toyota Camry is one of the best-selling cars in North America. The cost of a previously owned Camry depends upon many factors, including the model year, mileage, and condition. To investigate the relationship between the car’s mileage and the sales price for a 2007 model year Camry, Attached data file Camry show the mileage and sale price for 19 sales (Pricehub website, February 24, 2012).
+```{r}
+path8 <- read_csv(str_c("data/Camry.csv")) %>% 
+  rename(miles = `Miles (1000s)`,
+         price = `Price ($1000s)`)
+head(path8)
+```
+
+a. Develop a scatter diagram with the car mileage on the horizontal axis and the price on the vertical axis.
+```{r}
+path8 %>% 
+  ggplot() +
+  geom_point(aes(miles,price))
+```
+
+
+b. what does the scatter diagram developed in part (a) indicate about the relationship between the two variables?
+这两个可以用直线近似的变量之间似乎存在负相关关系。
+
+
+c. Develop the estimated regression equation that could be used to predict the price ($1000s) given the miles (1000s).
+```{r}
+lm_camry <- lm(price ~ miles, data = path8)
+
+summary(lm_camry)
+```
+
+
+d. Test for a significant relationship at the .05 level of significance.
+显著关系: $p-value = 0.000348 < α = .05$
+
+
+e. Did the estimated regression equation provide a good fit? Explain.
+$R^2=.5387$; 汽车的状况是价格因素之一，购买此车很合适。
+
+f. Provide an interpretation for the slope of the estimated regression equation.
+估计回归方程的斜率为-0.059，所以，x值每增加1个单位，y值就会减少0.059。由于数据以千为单位记录，汽车里程表每增加1000英里，预测价格就会减少59美元。
+
+
+g. Suppose that you are considering purchasing a previously owned 2007 Camry that has been driven 60,000 miles. Using the estimated regression equation developed in part (c), predict the price for this car. Is this the price you would offer the seller.
+一辆2007年丰田凯美瑞行驶6万英里的预计价格为$16.47-0.0588(60)=12.942$美元。多种因素构成价格，如车况和卖家是个人还是经销商，车辆的过户次数，这都构成我考虑这辆车价格的原因。
+
+
+**Question #9:** 附件WE.xlsx是某提供网站服务的Internet服务商的客户数据。数据包含了6347名客户在11个指标上的表现。其中”流失“指标中0表示流失，”1“表示不流失，其他指标含义看变量命名。
+```{r}
+we_data <- readxl::read_xlsx(str_c("D:/第二次作业/assignment-2-xiaozhenhan-dot-main/data/WE.xlsx")) %>% 
+  set_names("id","churn","happy_index","chg_hi","support","chg_supprt",
+            "priority","chg_priority","log_in_fre","chg_blog_fre","chg_vis","y_age","chg_interval")
+
+glimpse(we_data)
+  
+```
+
+a. 通过可视化探索流失客户与非流失客户的行为特点（或特点对比），你能发现流失与非流失客户行为在哪些指标有可能存在显著不同？
+```{r}
+we_data <- readxl::read_xlsx(str_c("D:/第二次作业/assignment-2-xiaozhenhan-dot-main/data/WE.xlsx")) %>% 
+  set_names("id","churn","happy_index","chg_hi","support","chg_supprt",
+            "priority","chg_priority","log_in_fre","chg_blog_fre","chg_vis","y_age","chg_interval")
+
+glimpse(we_data)
+```
+在所有11个指标中，流失与未流失的客户之间存在差异。
+未流失的客户的“当月客户幸福指数”较高，为89，而流失的客户的“当月客户幸福指数”则较低，为63。
+未流失的客户在“客户幸福指数相比上月变化”上为5.5，而流失的客户为-3.7，这可能意味着流失的客户经历了负面的变化。
+b. 通过均值比较的方式验证上述不同是否显著。
+```{r}
+we_data %>% 
+  select(-id) %>% 
+  pivot_longer(cols = -churn, names_to = "variable", values_to = "value") %>% 
+  group_nest(variable) %>% 
+  mutate(t.test = map(data, ~ tidy(t.test(value ~ churn, data = .x)))) %>% 
+  unnest(t.test) %>% 
+  select(-data) %>% 
+  kable() %>% kable_styling()
+```
+根据表格，我们可以得出以下结论：
+除了“客户支持相比上月的变化”和“服务优先级相比上月的变化”，其他所有指标的差异都是显著的。
+
+c. 以”流失“为因变量，其他你认为重要的变量为自变量（提示：a、b两步的发现），建立回归方程对是否流失进行预测。
+```{r}
+set.seed(1234)
+we_logit<-glm(churn ~ chg_blog_fre + chg_hi + chg_interval + chg_vis + happy_index
+              + log_in_fre + priority  + support + y_age,
+             data = we_data,
+             family = binomial(link = "logit"))
+summary(we_logit)
+
+library(car)
+vif(we_logit)
+```
+
+
+d. 根据上一步预测的结果，对尚未流失（流失=0）的客户进行流失可能性排序，并给出流失可能性最大的前100名用户ID列表。
+```{r}
+we_data %>% 
+  add_predictions(we_logit,type = "response") %>% 
+  arrange(desc(pred)) %>% 
+  filter(churn == 0) %>% 
+  slice_head(n=30) %>% 
+  kable() %>% kable_styling()
+```
+
